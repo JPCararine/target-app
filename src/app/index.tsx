@@ -1,12 +1,16 @@
 
-import { Text, View, StatusBar } from 'react-native'
+import { Text, View, StatusBar, Alert } from 'react-native'
 
 import { HomeHeader } from "../components/HomeHeader"
 import { Target } from "../components/Target";
 import { List } from "../components/List";
 import { Button } from "../components/Button"
 
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
+import { TargetResponse, useTargetDatabase } from '../database/useTargetDatabase';
+import { numberToCurrency } from '../utils/numberToCurrency';
+import React from 'react';
+import { Loading } from '../components/Loading';
 
 const summary = {
   total: "R$ 2.680,00",
@@ -14,25 +18,43 @@ const summary = {
   output: { label: "Saídas", value: "-R$ 883,65"},
 }
 
-const targets = [
-    {     
-      id: "1",
-          name: "Apple Watch",
-          current: "900,00",
-          percentage: "75%",
-          target: "1.200,00",
-        },
-        {     
-      id: "2",
-          name: "Teclado ",
-          current: "900,00",
-          percentage: "40%",
-          target: "2.000,00",
-        },
-    ]
 
 
 export default function Index() {
+  const targetDatabase = useTargetDatabase();
+  const [isFetching, setIsFetching] = React.useState(true);
+  const [targets, setTargets] = React.useState<TargetResponse[]>([]);
+
+  async function findTargets(): Promise<TargetResponse[]> {
+    try {
+      const response = await targetDatabase.listBySavedValue()
+      return response;
+    } catch (error) {
+      console.log(error)
+
+      return [];
+    }
+
+  }
+  async function fetchData() {
+    const targetDataPromise = findTargets()
+    const [targetData] = await Promise.all([targetDataPromise])
+
+    setTargets(targetData);
+    setIsFetching(false);
+  }
+  
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchData();
+  }, [])
+  )
+
+  if(isFetching) {
+    return <Loading />;
+  }
+
   return (
     <View style={{ flex: 1}}>
       <StatusBar barStyle="light-content" />
@@ -40,9 +62,14 @@ export default function Index() {
         
         <List 
         data={targets} 
-        keyExtractor={(item) => item.id} 
-        renderItem={({ item}) => (
-          <Target data={item} 
+        keyExtractor={(item) => item.id.toString()} 
+        renderItem={({item}) => (
+          <Target data={{
+            name: item.name,
+            percentage: `${item.percentage.toFixed(0)}%`,
+            current:  numberToCurrency(item.current),
+            target: numberToCurrency(item.amount),
+          }} 
           onPress={() => router.navigate(`/in-progress/${item.id}`)}
           />
         )} 

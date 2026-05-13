@@ -1,0 +1,41 @@
+import { Text, View, TouchableOpacity, TouchableOpacityProps } from "react-native";
+
+import { colors } from "../../theme/colors";
+import { MaterialIcons } from "@expo/vector-icons";
+import { router } from "expo-router";
+
+import { styles } from "./styles";
+
+type Props = TouchableOpacityProps & {
+    title: string;
+    subtitle?: string;
+    rightButton?: {
+        onPress: () => void;
+        icon: keyof typeof MaterialIcons.glyphMap;
+    }
+    
+}
+
+export function PageHeader({ title, subtitle, rightButton }: Props) {
+    return (
+        
+        <View style={styles.container}>
+            <View style={styles.header}>
+            <TouchableOpacity activeOpacity={0.8} onPress={() => router.back()}>
+            <MaterialIcons name="arrow-back" color={colors.black} size={32} />
+            </TouchableOpacity>
+            {rightButton && (
+                <TouchableOpacity activeOpacity={0.8} onPress={rightButton.onPress} >
+                <MaterialIcons name={ rightButton.icon } size={24} color={colors.gray[500]}/>
+                </TouchableOpacity>
+            )}
+            </View>
+            
+            
+            <Text style={styles.title}>{title}</Text>
+            {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+        </View>
+        
+        
+    )
+}

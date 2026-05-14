@@ -85,7 +85,7 @@ export default function Target() {
       return;
     }
 
-    Alert.alert("Remover", "Realmente deseja remover?", [
+    Alert.alert("Remover", "Realmente deseja remover essa meta?", [
       {
         text: "Sim",
         onPress: remove

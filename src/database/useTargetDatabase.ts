@@ -18,6 +18,9 @@ export type TargetResponse = {
     created_at: Date;
     updated_at: Date
 }
+export type TargetSummaryResponse = {
+  current: number;
+}
 
 export function useTargetDatabase() {
     const database = useSQLiteContext();
@@ -34,6 +37,7 @@ export function useTargetDatabase() {
             `)
 
     }
+
     async function findById(id: number) {
         return database.getFirstAsync<TargetResponse>(` 
             SELECT targets.id, targets.name, targets.amount, 
@@ -78,5 +82,6 @@ export function useTargetDatabase() {
         findById,
         update,
         deleteTarget,
+        
     }
 }

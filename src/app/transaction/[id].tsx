@@ -8,6 +8,7 @@ import { Input } from "../../components/Input";
 import { TransactionType } from "../../components/TransactionTypes";
 import { TransactionTypes } from "../../utils/transactionTypes";
 import { TransactionCreate, useTransactionsDatabase } from "../../database/useTransactionsDatabase";
+import { useTargetDatabase } from "../../database/useTargetDatabase";
 
 export default function Transaction() {
   const [type, setType] = React.useState(TransactionTypes.Input);
@@ -17,11 +18,19 @@ export default function Transaction() {
   const [isCreating, setIsCreating] = React.useState(false);
 
   const transactionDatabase = useTransactionsDatabase();
+  const targetDatabase = useTargetDatabase();
 
   async function handleCreate() {
     try {
       if(amount <= 0) {
         return Alert.alert("Atenção!", "Preencha o valor");
+      }
+      const target = await targetDatabase.findById(Number(params.id));
+      if(type === TransactionTypes.Output && amount > (target?.current ?? 0)) {
+        return Alert.alert(
+        "Saldo insuficiente",
+        "Você não pode retirar mais do que possui guardado."
+      );
       }
 
       setIsCreating(true);

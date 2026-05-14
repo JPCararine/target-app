@@ -1,7 +1,7 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router'
 import { Alert, View } from 'react-native'
 import { PageHeader } from '../../components/PageHeader'
-
+import dayjs from "dayjs";
 import { Button } from "../../components/Button";
 import { Progress } from '../../components/Progress';
 import { Transaction, TransactionProps }from '../../components/Transaction';
@@ -9,27 +9,10 @@ import { List } from '../../components/List';
 import { numberToCurrency } from '../../utils/numberToCurrency';
 import { TransactionTypes } from '../../utils/transactionTypes';
 import { TargetResponse, useTargetDatabase } from '../../database/useTargetDatabase';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Loading } from '../../components/Loading';
 import { TransactionResponse, useTransactionsDatabase } from '../../database/useTransactionsDatabase';
 
-
-const transactions: TransactionProps[] = [
-  {
-    id: "1",
-    value: "R$ 300,00",
-    date: "12/04/25",
-    description: "CDB de 110% no banco XPTO",
-    type: TransactionTypes.Input
-  },
-  {
-    id: "2",
-    value: "R$ 20,00",
-    date: "12/04/25",
-    type: TransactionTypes.Output
-
-  }
-]
 
 export default function InProgress() {
   const params = useLocalSearchParams<{ id: string }>()
@@ -72,16 +55,45 @@ export default function InProgress() {
     setIsLoading(false)
   }
 
+  function handleRemove(id: string) {
+  
+      Alert.alert("Remover", "Realmente deseja remover essa meta?", [
+        {
+          text: "Sim",
+          onPress: () => remove(id)
+        },
+        {
+          text: "Não", style: "cancel"
+        }
+      ])
+    }
+  async function remove(id: string) {
+    try {
+        
+        await transactionsDatabase.removeTransaction(Number(id))
+        await fetchData();
+        Alert.alert("Transação", "Transação removida com sucesso!");
+      
+    } catch (error) {
+      Alert.alert("Erro", "Não foi possível remover transação.");
+    }
+    
+  }
+
   useFocusEffect(
     React.useCallback(() => {
         fetchData()
     }, [])
   )
+  
+  
+
 
   if(isLoading) {
     return <Loading />
   }
 
+  
   return (
     <View style={{ flex: 1, padding: 24 }}>
       <PageHeader title={target?.name ?? ""} rightButton={{
@@ -100,12 +112,12 @@ export default function InProgress() {
       <Transaction data={{
         id: item.id.toString(),
         value: numberToCurrency(item.amount), 
-        date: item.created_at.toLocaleDateString("pt-BR"),
+        date: dayjs(item.created_at).format("DD/MM/YYYY [às] HH:mm"),
         description: item.observation,
         type: item.amount < 0 ? TransactionTypes.Output : TransactionTypes.Input
       }}
       
-      onRemove={() => {}}/>} 
+      onRemove={() => handleRemove(item.id.toString())}/>} 
       emptyMessage="Nenhuma transação."
       />
 
